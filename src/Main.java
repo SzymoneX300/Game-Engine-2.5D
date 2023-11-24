@@ -1,10 +1,13 @@
-public class Main {
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+public class Main implements KeyListener{
     /**
      * To view this properly, you need to run it in CMD, set in
      * CMD's properties > layout > windows size > width to SCREEN_WIDTH
      * and height to SCREEN_HEIGHT and in font tab, set a font that's
      * height is 1.5 it's width
-     *
+     * -------------------------
      * (ie I use 'RasterFonts' with size 4x6, that's the smallest size font
      * that doesn't produce colorbleed effect at least on my screen and
      * displays proper shades of gray, other sometimes tint the image
@@ -28,8 +31,35 @@ public class Main {
     private static final double SCREEN_FOV = Math.PI * (60.0 / 180);
     private static double playerX = 7.5, playerY = 3.5, playerA = 0;
     private static final WriteCMDBuffer CMD = new WriteCMDBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
-
     private static boolean run = true;
+    private static boolean isMovingForward = false, isMovingBackward = false, isMovingLeft = false, isMovingRight = false, isRotatingLeft = false, isRotatingRight = false;
+
+    @Override
+    public void keyTyped(KeyEvent e) { }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch (e.getKeyCode()){
+            case KeyEvent.VK_W -> isMovingForward = true;
+            case KeyEvent.VK_S -> isMovingBackward = true;
+            case KeyEvent.VK_A -> isMovingLeft = true;
+            case KeyEvent.VK_D -> isMovingRight = true;
+            case KeyEvent.VK_LEFT -> isRotatingLeft = true;
+            case KeyEvent.VK_RIGHT -> isRotatingRight = true;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        switch (e.getKeyCode()){
+            case KeyEvent.VK_W -> isMovingForward = false;
+            case KeyEvent.VK_S -> isMovingBackward = false;
+            case KeyEvent.VK_A -> isMovingLeft = false;
+            case KeyEvent.VK_D -> isMovingRight = false;
+            case KeyEvent.VK_LEFT -> isRotatingLeft = false;
+            case KeyEvent.VK_RIGHT -> isRotatingRight = false;
+        }
+    }
 
     private static void drawScreen(){
         char[][] tempScreen = new char[SCREEN_WIDTH][SCREEN_HEIGHT];
@@ -84,12 +114,13 @@ public class Main {
             }
         }
         CMD.writeScreen();
-        playerA -= Math.PI / 480;
     }
 
     public static void main(String[] args) {
         while(run){
             double start = System.nanoTime(), end = 0;
+            if(isMovingRight && !isMovingLeft) playerA -= Math.PI / 240;
+            else if(isMovingLeft) playerA += Math.PI / 240;
             drawScreen();
             if(playerA >= Math.PI * 2) playerA -= Math.PI * 2;
             do{
