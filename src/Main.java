@@ -1,7 +1,6 @@
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import static java.awt.event.KeyEvent.*;
 
-public class Main implements KeyListener{
+public class Main{
     /**
      * To view this properly, you need to run it in CMD, set in
      * CMD's properties > layout > windows size > width to SCREEN_WIDTH
@@ -13,6 +12,7 @@ public class Main implements KeyListener{
      * displays proper shades of gray, other sometimes tint the image
      * purple or brown from my testing)
      */
+
 
     private static final char[] MAP = {
             '#','#','#','#','#','#','#','#','#','#',
@@ -28,38 +28,11 @@ public class Main implements KeyListener{
     };
     private static final long FRAME_TIME = 1_000_000_000 / 60;
     private static final int SCREEN_WIDTH = 479, SCREEN_HEIGHT = 179;
-    private static final double SCREEN_FOV = Math.PI * (60.0 / 180);
-    private static double playerX = 7.5, playerY = 3.5, playerA = 0;
+    private static final double SCREEN_FOV = Math.PI * (60.0 / 180), PLAYER_SPEED = 0.02;
     private static final WriteCMDBuffer CMD = new WriteCMDBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
-    private static boolean run = true;
+    private static final boolean RUN = true;
+    private static double playerX = 7.5, playerY = 3.5, playerA = 0;
     private static boolean isMovingForward = false, isMovingBackward = false, isMovingLeft = false, isMovingRight = false, isRotatingLeft = false, isRotatingRight = false;
-
-    @Override
-    public void keyTyped(KeyEvent e) { }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()){
-            case KeyEvent.VK_W -> isMovingForward = true;
-            case KeyEvent.VK_S -> isMovingBackward = true;
-            case KeyEvent.VK_A -> isMovingLeft = true;
-            case KeyEvent.VK_D -> isMovingRight = true;
-            case KeyEvent.VK_LEFT -> isRotatingLeft = true;
-            case KeyEvent.VK_RIGHT -> isRotatingRight = true;
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        switch (e.getKeyCode()){
-            case KeyEvent.VK_W -> isMovingForward = false;
-            case KeyEvent.VK_S -> isMovingBackward = false;
-            case KeyEvent.VK_A -> isMovingLeft = false;
-            case KeyEvent.VK_D -> isMovingRight = false;
-            case KeyEvent.VK_LEFT -> isRotatingLeft = false;
-            case KeyEvent.VK_RIGHT -> isRotatingRight = false;
-        }
-    }
 
     private static void drawScreen(){
         char[][] tempScreen = new char[SCREEN_WIDTH][SCREEN_HEIGHT];
@@ -70,7 +43,7 @@ public class Main implements KeyListener{
 
             double eyeX = Math.sin(rayAngle), eyeY = Math.cos(rayAngle);
 
-            while(!hit && dist < 5){
+            while(!hit && dist < 4.6){
                 dist += 0.005;
 
                 int testX = (int)(playerX + eyeX * dist);
@@ -78,7 +51,7 @@ public class Main implements KeyListener{
 
                 if(testX < 0 || testX > 10 || testY < 0 || testY > 10){
                     hit = true;
-                    dist = 5;
+                    dist = 4.6;
                 } else{
                     if(MAP[(testY * 10) + testX] == '#'){
                         hit = true;
@@ -116,13 +89,57 @@ public class Main implements KeyListener{
         CMD.writeScreen();
     }
 
-    public static void main(String[] args) {
-        while(run){
-            double start = System.nanoTime(), end = 0;
-            if(isMovingRight && !isMovingLeft) playerA -= Math.PI / 240;
-            else if(isMovingLeft) playerA += Math.PI / 240;
+    public static boolean getAsyncKeyState(int key){
+        int keyState = KeyState.INSTANCE.GetAsyncKeyState(key);
+        return ((keyState & 0x8000) != 0);
+    }
+
+    public static void setMovementFlags(){
+        isMovingForward = getAsyncKeyState(VK_W);
+        isMovingLeft = getAsyncKeyState(VK_A);
+        isMovingBackward = getAsyncKeyState(VK_S);
+        isMovingRight = getAsyncKeyState(VK_D);
+        isRotatingLeft = getAsyncKeyState(VK_LEFT);
+        isRotatingRight = getAsyncKeyState(VK_RIGHT);
+    }
+
+    public static void calculateMovement(){
+        if(isRotatingRight && !isRotatingLeft) playerA -= Math.PI / 240;
+        else if(isRotatingLeft) playerA += Math.PI / 240;
+
+        if(playerA >= Math.PI * 2) playerA -= Math.PI * 2;
+        else if (playerA < 0) playerA = (Math.PI *2) + playerA;
+
+        if(isMovingForward && !isMovingBackward){
+                playerY += Math.cos(playerA - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0)) * PLAYER_SPEED;
+                playerX += Math.sin(playerA - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0)) * PLAYER_SPEED;
+        }
+        else if (isMovingBackward && !isMovingForward) {
+                playerY += Math.cos(playerA - (Math.PI - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0))) * PLAYER_SPEED;
+                playerX += Math.sin(playerA - (Math.PI - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0))) * PLAYER_SPEED;
+        }
+        else if(isMovingLeft && !isMovingRight) {
+            playerY += Math.cos(playerA + (Math.PI/2)) * PLAYER_SPEED;
+            playerX += Math.sin(playerA + (Math.PI/2)) * PLAYER_SPEED;
+        }
+        else if(isMovingRight && !isMovingLeft) {
+            playerY += Math.cos(playerA - (Math.PI/2)) * PLAYER_SPEED;
+            playerX += Math.sin(playerA - (Math.PI/2)) * PLAYER_SPEED;
+        }
+
+        playerX = Math.max(0,Math.min(9, playerX));
+        playerY = Math.max(0,Math.min(9, playerY));
+    }
+
+
+    public static void main(String[] args){
+        while(RUN){
+            double start = System.nanoTime(), end;
+
+            setMovementFlags();
+            calculateMovement();
             drawScreen();
-            if(playerA >= Math.PI * 2) playerA -= Math.PI * 2;
+
             do{
                 end = System.nanoTime();
             }while(start + FRAME_TIME > end);

@@ -13,6 +13,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/../../libs/jnr-a64asm-1.0.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/../../libs/jnr-ffi-2.2.15.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/../../libs/jnr-x86asm-1.0.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../libs/jinput/jinput-2.0.9.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
