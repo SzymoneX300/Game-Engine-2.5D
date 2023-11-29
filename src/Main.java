@@ -30,9 +30,8 @@ public class Main{
     private static final int SCREEN_WIDTH = 479, SCREEN_HEIGHT = 179;
     private static final double SCREEN_FOV = Math.PI * (60.0 / 180), PLAYER_SPEED = 0.02;
     private static final WriteCMDBuffer CMD = new WriteCMDBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
-    private static final boolean RUN = true;
     private static double playerX = 7.5, playerY = 3.5, playerA = 0;
-    private static boolean isMovingForward = false, isMovingBackward = false, isMovingLeft = false, isMovingRight = false, isRotatingLeft = false, isRotatingRight = false;
+    private static boolean isMovingForward = false, isMovingBackward = false, isMovingLeft = false, isMovingRight = false, isRotatingLeft = false, isRotatingRight = false, run = true;
 
     private static void drawScreen(){
         char[][] tempScreen = new char[SCREEN_WIDTH][SCREEN_HEIGHT];
@@ -43,7 +42,7 @@ public class Main{
 
             double eyeX = Math.sin(rayAngle), eyeY = Math.cos(rayAngle);
 
-            while(!hit && dist < 4.6){
+            while(!hit && dist < 4.8){
                 dist += 0.005;
 
                 int testX = (int)(playerX + eyeX * dist);
@@ -51,7 +50,7 @@ public class Main{
 
                 if(testX < 0 || testX > 10 || testY < 0 || testY > 10){
                     hit = true;
-                    dist = 4.6;
+                    dist = 4.8;
                 } else{
                     if(MAP[(testY * 10) + testX] == '#'){
                         hit = true;
@@ -61,23 +60,41 @@ public class Main{
             int halfSpace = (dist != 0)?(int) Math.min(Math.floor(((double) SCREEN_HEIGHT / 2) - ((SCREEN_HEIGHT / dist) / 1.7)), Math.floor((double) SCREEN_HEIGHT / 2)) : -1;
             int wallHeight = SCREEN_HEIGHT - (2 * halfSpace);
             wallHeight += SCREEN_HEIGHT - (wallHeight + (2 * halfSpace));
+
             for (int j = 0; j < SCREEN_HEIGHT; j++) {
                 if(j < halfSpace) tempScreen[i][j] = ' ';
+
                 else if (j > wallHeight + halfSpace) {
-                    if (j < 112) tempScreen[i][j] = ' ';
-                    else if (j < 134) tempScreen[i][j] = '─';
-                    else if (j < 156) tempScreen[i][j] = '┬';
-                    else tempScreen[i][j] = '┼';
+                    if (j < 105)        tempScreen[i][j] = ' ';
+                    if (j < 118)        tempScreen[i][j] = ((i + j) % 2 == 0) ? ' ' : '─';
+                    else if (j < 127)   tempScreen[i][j] = '─';
+                    else if (j < 140)   tempScreen[i][j] = ((i + j) % 2 == 0) ? '─' : '┬';
+                    else if (j < 149)   tempScreen[i][j] = '┬';
+                    else if (j < 163)   tempScreen[i][j] = ((i + j) % 2 == 0) ? '┬' : '┼';
+                    else                tempScreen[i][j] = '┼';
                 }
+
                 else{
-                    if (dist < 0.74) tempScreen[i][j] = '█';            //'█'
-                    else if (dist < 2) tempScreen[i][j] = '▓';          //'▓'
-                    else if (dist < 2.94)  tempScreen[i][j] = '▒';      //'▒'
-                    else  if (dist < 3.46) tempScreen[i][j] = '░';      //'░'
-                    else  if (dist < 3.68) tempScreen[i][j] = '¦';      //'¦'
-                    else  if (dist < 3.94) tempScreen[i][j] = ':';      //':'
-                    else  if (dist < 4.58) tempScreen[i][j] = '.';      //'.'
-                    else tempScreen[i][j] = ' ';                        //' '
+                    if(dist < 2.18) {
+                        if (dist < 0.52)        tempScreen[i][j] = '█';                             //'██████'
+                        else if (dist < 1)      tempScreen[i][j] = ((i + j) % 2 == 0) ? '█' : '▓';  //'█▓█▓█▓'
+                        else if (dist < 1.84)   tempScreen[i][j] = '▓';                             //'▓▓▓▓▓▓'
+                        else                    tempScreen[i][j] = ((i + j) % 2 == 0) ? '▓' : '▒';  //'▓▒▓▒▓▒'
+                    }
+                    else if (dist < 3.72) {
+                        if (dist < 2.82)        tempScreen[i][j] = '▒';                             //'▒▒▒▒▒▒'
+                        else if (dist < 3.08)   tempScreen[i][j] = ((i + j) % 2 == 0) ? '▒' : '░';  //'▒░▒░▒░'
+                        else if (dist < 3.44)   tempScreen[i][j] = '░';                             //'░░░░░░'
+                        else if (dist < 3.48)   tempScreen[i][j] = ((i + j) % 2 == 0) ? '░' : '¦';  //'░¦░¦░¦'
+                        else if (dist < 3.64)   tempScreen[i][j] = '¦';                             //'¦¦¦¦¦¦'
+                        else                    tempScreen[i][j] = ((i + j) % 2 == 0) ? '¦' : ':';  //'¦:¦:¦:'
+                    }
+                    else if (dist < 3.92)   tempScreen[i][j] = ':';                             //'::::::'
+                    else if (dist < 4)      tempScreen[i][j] = ((i + j) % 2 == 0) ? ':' : '.';  //':.:.:.'
+                    else if (dist < 4.44)   tempScreen[i][j] = '.';                             //'......'
+                    else if (dist < 4.8)    tempScreen[i][j] = ((i + j) % 2 == 0) ? '.' : ' ';  //'. . . '
+                    else                    tempScreen[i][j] = ' ';                             //'      '
+
                 }
             }
         }
@@ -88,6 +105,7 @@ public class Main{
         }
         CMD.writeScreen();
     }
+
 
     public static boolean getAsyncKeyState(int key){
         int keyState = KeyState.INSTANCE.GetAsyncKeyState(key);
@@ -104,6 +122,7 @@ public class Main{
     }
 
     public static void calculateMovement(){
+        double tempPlayerX = playerX, tempPlayerY = playerY;
         if(isRotatingRight && !isRotatingLeft) playerA -= Math.PI / 240;
         else if(isRotatingLeft) playerA += Math.PI / 240;
 
@@ -111,29 +130,44 @@ public class Main{
         else if (playerA < 0) playerA = (Math.PI *2) + playerA;
 
         if(isMovingForward && !isMovingBackward){
-                playerY += Math.cos(playerA - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0)) * PLAYER_SPEED;
-                playerX += Math.sin(playerA - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0)) * PLAYER_SPEED;
+            tempPlayerY += Math.cos(playerA - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0)) * PLAYER_SPEED;
+            tempPlayerX += Math.sin(playerA - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0)) * PLAYER_SPEED;
         }
         else if (isMovingBackward && !isMovingForward) {
-                playerY += Math.cos(playerA - (Math.PI - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0))) * PLAYER_SPEED;
-                playerX += Math.sin(playerA - (Math.PI - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0))) * PLAYER_SPEED;
+            tempPlayerY += Math.cos(playerA - (Math.PI - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0))) * PLAYER_SPEED;
+            tempPlayerX += Math.sin(playerA - (Math.PI - (isMovingRight?(Math.PI/4):0) + (isMovingLeft?(Math.PI/4):0))) * PLAYER_SPEED;
         }
         else if(isMovingLeft && !isMovingRight) {
-            playerY += Math.cos(playerA + (Math.PI/2)) * PLAYER_SPEED;
-            playerX += Math.sin(playerA + (Math.PI/2)) * PLAYER_SPEED;
+            tempPlayerY += Math.cos(playerA + (Math.PI/2)) * PLAYER_SPEED;
+            tempPlayerX += Math.sin(playerA + (Math.PI/2)) * PLAYER_SPEED;
         }
         else if(isMovingRight && !isMovingLeft) {
-            playerY += Math.cos(playerA - (Math.PI/2)) * PLAYER_SPEED;
-            playerX += Math.sin(playerA - (Math.PI/2)) * PLAYER_SPEED;
+            tempPlayerY += Math.cos(playerA - (Math.PI/2)) * PLAYER_SPEED;
+            tempPlayerX += Math.sin(playerA - (Math.PI/2)) * PLAYER_SPEED;
         }
 
-        playerX = Math.max(0,Math.min(9, playerX));
-        playerY = Math.max(0,Math.min(9, playerY));
+        tempPlayerX = Math.max(1.1,Math.min(8.9, tempPlayerX));
+        tempPlayerY = Math.max(1.1,Math.min(8.9, tempPlayerY));
+
+        if(Math.abs(tempPlayerY - playerY) > Math.abs(tempPlayerX - playerX)){
+            if (tempPlayerX < playerX && (MAP[(((int) (tempPlayerY - 0.1)) * 10) + (int) (tempPlayerX - 0.1)] == '#' || MAP[(((int) (tempPlayerY + 0.1)) * 10) + (int) (tempPlayerX - 0.1)] == '#'))
+                tempPlayerX = ((int) (tempPlayerX - 0.1)) + 1.1;
+            else if (tempPlayerX > playerX && (MAP[(((int) (tempPlayerY - 0.1)) * 10) + (int) (tempPlayerX + 0.1)] == '#' || MAP[(((int) (tempPlayerY + 0.1)) * 10) + (int) (tempPlayerX + 0.1)] == '#'))
+                tempPlayerX = ((int) (tempPlayerX + 0.1)) - 0.1;
+        }
+        else if(Math.abs(tempPlayerY - playerY) < Math.abs(tempPlayerX - playerX)){
+            if (tempPlayerY < playerY && (MAP[(((int) (tempPlayerY + 0.1)) * 10) + (int) (tempPlayerX + 0.1)] == '#' || MAP[(((int) (tempPlayerY + 0.1)) * 10) + (int) (tempPlayerX - 0.1)] == '#'))
+                tempPlayerY = ((int) (tempPlayerY - 0.1)) + 1.1;
+            else if (tempPlayerY > playerY && (MAP[(((int) (tempPlayerY - 0.1)) * 10) + (int) (tempPlayerX + 0.1)] == '#' || MAP[(((int) (tempPlayerY - 0.1)) * 10) + (int) (tempPlayerX - 0.1)] == '#'))
+                tempPlayerY = ((int) (tempPlayerY + 0.1)) - 0.1;
+        }
+
+        playerX = tempPlayerX;
+        playerY = tempPlayerY;
     }
 
-
     public static void main(String[] args){
-        while(RUN){
+        while(run){
             double start = System.nanoTime(), end;
 
             setMovementFlags();
@@ -144,5 +178,6 @@ public class Main{
                 end = System.nanoTime();
             }while(start + FRAME_TIME > end);
         }
+        run = true;
     }
 }
